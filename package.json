@@ -1,0 +1,28 @@
+{
+  "name": "node-websocket",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve:dev": "node --require dotenv/config ./server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chaimfn/node-websocket.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chaimfn/node-websocket/issues"
+  },
+  "homepage": "https://github.com/chaimfn/node-websocket#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-ws": "^4.0.0"
+  },
+  "devDependencies": {
+    "dotenv-flow": "^3.0.0"
+  }
+}

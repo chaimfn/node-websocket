@@ -1,0 +1,124 @@
+<!--
+    You can run this example with "http-server -p 90 --cors"
+
+    and open browsers - browser for each address you got after running
+    (For example: 
+        http://localhost:90/client-example.html
+        http://127.0.0.1:90/client-example.html
+        http://10.110.189.102:90/client-example.html
+        http://192.168.56.1:90/client-example.html
+    )
+-->
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title id="title"></title>
+    <style>
+        #div-msgs-wrapper {
+            width: 300px;
+            height: 360px;
+            overflow: hidden;
+            overflow-y: auto;
+        }
+
+        #div-msgs .msg.me {
+            text-align: right;
+        }
+
+        #div-msgs .msg.other {
+            text-align: left;
+        }
+
+        #div-msgs .msg .content {
+            display: inline-block;
+            max-width: 40%;
+            border-radius: 7px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        #div-msgs .msg.me .content {
+            background: lightcyan;
+        }
+
+        #div-msgs .msg.other .content {
+            background: lightpink;
+        }
+
+        #div-msgs .msg .content .member {
+            font-size: small;
+        }
+
+        #div-msgs .msg .content .text {
+            font-size: large;
+        }
+    </style>
+    <script>
+        const me = document.location.hostname;
+        document.getElementById("title").innerText = me;
+        const enter = 13;
+        const ws = new WebSocket("ws://localhost:4545");
+        ws.onopen = e => {
+            console.log("onopen", e);
+            ws.send(`connected`);
+        }
+        ws.onmessage = msg => {
+            console.log("onmessage", msg);
+            const data = JSON.parse(msg.data);
+            const oMsgs = document.getElementById("div-msgs");
+            const oMsg = createOMsg(data);
+            oMsgs.appendChild(oMsg);
+        }
+        ws.onerror = err => {
+            console.log("onerror", err);
+        }
+
+        function send(e) {
+            if ((e.which || e.keyCode) != enter)
+                return;
+            ws.send(e.target.value);
+            e.target.value = "";
+        }
+
+        function createOMsg(data) {
+            const time = new Date().toLocaleTimeString()
+            let cssClass = "";
+            if (data.member == me)
+                data.member = cssClass = "me"
+            else
+                cssClass = "other";
+
+            cssClass = `msg ${cssClass}`;
+            const wrapper = document.createElement("div");
+            wrapper.setAttribute("class", cssClass);
+            const content = document.createElement("div");
+            content.setAttribute("class", "content");
+            const memberElem = document.createElement("div")
+            memberElem.setAttribute("class", "member");
+            memberElem.innerText = `${time}, ${data.member}`;
+            const textElem = document.createElement("div");
+            textElem.setAttribute("class", "text");
+            textElem.innerText = data.msg;
+            content.appendChild(memberElem);
+            content.appendChild(textElem);
+            wrapper.appendChild(content);
+            return wrapper;
+        }
+    </script>
+</head>
+
+<body>
+    <div id="div-msgs-wrapper">
+        <div id="div-msgs">
+        </div>
+    </div>
+    <div>
+        <input type="text" name="msg" id="txt-msg" placeholder="Your message" onkeypress="send(event)">
+    </div>
+</body>
+
+</html>

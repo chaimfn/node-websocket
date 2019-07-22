@@ -1,5 +1,5 @@
 <!--
-    You can run this example with "http-server -p 90 --cors"
+    You can run this example with "npx lite-server -p 90 --cors"
 
     and open browsers - browser for each address you got after running
     (For example: 
@@ -70,11 +70,14 @@
             console.log("onmessage", msg);
             const data = JSON.parse(msg.data);
             const oMsgs = document.getElementById("div-msgs");
-            const oMsg = createOMsg(data);
+            const oMsg = uiMessage.createOMsg(data);
             oMsgs.appendChild(oMsg);
         }
         ws.onerror = err => {
             console.log("onerror", err);
+        }
+        ws.onclose = e => {
+
         }
 
         function send(e) {
@@ -84,30 +87,53 @@
             e.target.value = "";
         }
 
-        function createOMsg(data) {
-            const time = new Date().toLocaleTimeString()
-            let cssClass = "";
-            if (data.member == me)
-                data.member = cssClass = "me"
-            else
-                cssClass = "other";
+        const uiMessage = {
+            createOMsg: (data) => {
+                cssClass = uiMessage.createCssClass(data);
+                const wrapper = document.createElement("div");
+                wrapper.setAttribute("class", cssClass);
 
-            cssClass = `msg ${cssClass}`;
-            const wrapper = document.createElement("div");
-            wrapper.setAttribute("class", cssClass);
-            const content = document.createElement("div");
-            content.setAttribute("class", "content");
-            const memberElem = document.createElement("div")
-            memberElem.setAttribute("class", "member");
-            memberElem.innerText = `${time}, ${data.member}`;
-            const textElem = document.createElement("div");
-            textElem.setAttribute("class", "text");
-            textElem.innerText = data.msg;
-            content.appendChild(memberElem);
-            content.appendChild(textElem);
-            wrapper.appendChild(content);
-            return wrapper;
+                const content = uiMessage.createOContent(data);
+                wrapper.appendChild(content);
+                return wrapper;
+            },
+
+            createCssClass: (data) => {
+                let cssClass = "";
+                if (data.member == me)
+                    data.member = cssClass = "me"
+                else
+                    cssClass = "other";
+
+                return `msg ${cssClass}`;
+            },
+
+            createOContent: (data) => {
+                const content = document.createElement("div");
+                content.setAttribute("class", "content");
+                const oMember = uiMessage.createOMember(data.member);
+                content.appendChild(oMember);
+                const oText = uiMessage.createOText(data.msg);
+                content.appendChild(oText);
+                return content;
+            },
+
+            createOMember: (member) => {
+                const time = new Date().toLocaleTimeString()
+                const memberElem = document.createElement("div")
+                memberElem.setAttribute("class", "member");
+                memberElem.innerText = `${time}, ${member}`;
+                return memberElem;
+            },
+
+            createOText: (text) => {
+                const textElem = document.createElement("div");
+                textElem.setAttribute("class", "text");
+                textElem.innerText = text;
+                return textElem;
+            }
         }
+
     </script>
 </head>
 

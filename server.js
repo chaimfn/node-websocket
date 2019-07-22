@@ -1,6 +1,5 @@
 const _express = require("express");
 const _expressWs = require("express-ws");
-//const _wsRouter = _express.Router();
 const _router = _express.Router();
 
 const port = process.env.PORT || 4545;
@@ -12,12 +11,12 @@ wss.on("connection", (ws, req) => {
     console.log("ws", JSON.stringify(ws));
     console.log("----------")
     console.log();
+    const ip = req.headers.origin.split("://")[1].split(":")[0];
     ws.on("message", msg => {
-        console.log("headers", req.headers)
-        const client = req.headers.origin.split("://")[1].split(":");
+        //console.log("headers", req.headers)
         console.log("wss.on(messgae)", msg)
         const data = {
-            member: client[0],
+            member: ip,
             msg
         }
         console.log(data);
@@ -25,8 +24,16 @@ wss.on("connection", (ws, req) => {
             c.send(JSON.stringify(data))
         })
     })
-    ws.on("close", () => {
+    ws.on("close", ws => {
         console.log("wss.on(close)")
+        const data = {
+            member: ip,
+            msg: "disconnected"
+        }
+        console.log(data);
+        wss.clients.forEach(c => {
+            c.send(JSON.stringify(data))
+        })
     })
     ws.on("error", err => {
         console.log("wss.on(error)", err)
@@ -61,26 +68,19 @@ _router
         res.end();
     });
 
-/*
-_wsRouter.ws("/", (ws, req) => {
-    console.log("_wsRouter.ws(/)")
-    ws.on("message", msg => {
-        console.log("ws.on(message)", msg);
-        ws.send(msg)
-    })
-})
-*/
-
 app
     .use(_express.urlencoded({ extended: false }))
     .use(_express.json())
     .use(_router)
+    // serve web-sockets requests
+    /*
     .ws("/", (ws, req) => {
         console.log("app.ws(/)");
         ws.on("message", msg => {
             console.log("app.ws.on(message)", msg);
         })
     })
+    */
     // handle errors
     .use((err, req, res, next) => {
         console.log("_router onerror", err);

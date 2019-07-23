@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve:dev": "node --require dotenv/config ./server.js"
+    "runserver:dev": "node --require dotenv/config ./server.js",
+    "runclient:dev": "npx lite-server"
   },
   "repository": {
     "type": "git",

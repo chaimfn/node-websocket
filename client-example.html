@@ -33,28 +33,31 @@
             text-align: left;
         }
 
-        #div-msgs .msg .content {
+        #div-msgs .msg .content,
+        #div-members .member {
             display: inline-block;
             max-width: 40%;
             border-radius: 7px;
             padding: 5px;
             margin-bottom: 10px;
+            margin-right: 5px;
         }
 
         #div-msgs .msg.me .content {
             background: lightblue;
         }
 
-        #div-msgs .msg.other .content {
-            background: lightpink;
-        }
-
-        #div-msgs .msg .content .member {
-            font-size: small;
+        #div-msgs .msg.other .content,
+        #div-members .member {
+            background: rgb(185, 236, 185);
         }
 
         #div-msgs .msg .content .text {
             font-size: large;
+        }
+
+        .member {
+            font-size: 11px;
         }
     </style>
     <script>
@@ -64,14 +67,20 @@
         const ws = new WebSocket("ws://localhost:4545");
         ws.onopen = e => {
             console.log("onopen", e);
-            ws.send(`connected`);
         }
         ws.onmessage = msg => {
             console.log("onmessage", msg);
             const data = JSON.parse(msg.data);
-            const oMsgs = document.getElementById("div-msgs");
-            const oMsg = uiMessage.createOMsg(data);
-            oMsgs.appendChild(oMsg);
+            if (data.connected) {
+                if (data.ip != me)
+                    _ui.addMember(data.ip);
+            }
+            else if (data.disconnected) {
+                if (data.ip != me)
+                    _ui.removeMember(data.ip)
+            }
+            else if (data.msg)
+                _ui.showMsg(data);
         }
         ws.onerror = err => {
             console.log("onerror", err);
@@ -87,46 +96,69 @@
             e.target.value = "";
         }
 
-        const uiMessage = {
-            createOMsg: (data) => {
-                cssClass = uiMessage.createCssClass(data);
+        const _ui = {
+            addMember: member => {
+                const oMembers = document.getElementById("div-members");
+                const memberElem = _ui.createMemberElem(member);
+                oMembers.appendChild(memberElem);
+            },
+
+            removeMember: member => {
+                const oMembers = document.getElementById("div-members");
+                for (let i = 0; i < oMembers.childNodes.length; i++) {
+                    if (oMembers.childNodes[i].attributes["member-id"].value == member) {
+                        oMembers.childNodes[i].remove();
+                        return;
+                    }
+                }
+            },
+
+            showMsg: (data) => {
+                const oMsgs = document.getElementById("div-msgs");
+                const oMsg = _ui.createMsgElem(data);
+                oMsgs.appendChild(oMsg);
+            },
+
+            createMsgElem: (data) => {
+                cssClass = _ui.getCssClass(data);
                 const wrapper = document.createElement("div");
                 wrapper.setAttribute("class", cssClass);
 
-                const content = uiMessage.createOContent(data);
+                const content = _ui.createContentElem(data);
                 wrapper.appendChild(content);
                 return wrapper;
             },
 
-            createCssClass: (data) => {
+            getCssClass: (data) => {
                 let cssClass = "";
-                if (data.member == me)
-                    data.member = cssClass = "me"
+                if (data.ip == me)
+                    data.ip = cssClass = "me"
                 else
                     cssClass = "other";
 
                 return `msg ${cssClass}`;
             },
 
-            createOContent: (data) => {
+            createContentElem: (data) => {
                 const content = document.createElement("div");
                 content.setAttribute("class", "content");
-                const oMember = uiMessage.createOMember(data.member);
+                const oMember = _ui.createMemberElem(data.ip);
                 content.appendChild(oMember);
-                const oText = uiMessage.createOText(data.msg);
+                const oText = _ui.createTextElem(data.msg);
                 content.appendChild(oText);
                 return content;
             },
 
-            createOMember: (member) => {
-                const time = new Date().toLocaleTimeString()
+            createMemberElem: (member) => {
+                const time = new Date().toLocaleTimeString("he-IL")
                 const memberElem = document.createElement("div")
                 memberElem.setAttribute("class", "member");
+                memberElem.setAttribute("member-id", member);
                 memberElem.innerText = `${time}, ${member}`;
                 return memberElem;
             },
 
-            createOText: (text) => {
+            createTextElem: (text) => {
                 const textElem = document.createElement("div");
                 textElem.setAttribute("class", "text");
                 textElem.innerText = text;
@@ -138,6 +170,7 @@
 </head>
 
 <body>
+    <div id="div-members"></div>
     <div id="div-msgs-wrapper">
         <div id="div-msgs">
         </div>

@@ -7,36 +7,37 @@ const app = _express();
 const _ws = _expressWs(app);
 const wss = _ws.getWss()
 wss.on("connection", (ws, req) => {
-    console.log("wss.once(connection)");
+    console.log("wss.on(connection)");
     console.log("ws", JSON.stringify(ws));
     console.log("----------")
     console.log();
     const ip = req.headers.origin.split("://")[1].split(":")[0];
+    const data = { ip, connected: true };
+    wss.clients.forEach(c => {
+        c.send(JSON.stringify(data))
+    })
+
     ws.on("message", msg => {
         //console.log("headers", req.headers)
         console.log("wss.on(messgae)", msg)
-        const data = {
-            member: ip,
-            msg
-        }
-        console.log(data);
+        const data = { ip, msg };
         wss.clients.forEach(c => {
             c.send(JSON.stringify(data))
         })
     })
     ws.on("close", ws => {
         console.log("wss.on(close)")
-        const data = {
-            member: ip,
-            msg: "disconnected"
-        }
-        console.log(data);
+        const data = { ip, disconnected: true };
         wss.clients.forEach(c => {
             c.send(JSON.stringify(data))
         })
     })
     ws.on("error", err => {
         console.log("wss.on(error)", err)
+        const data = { ip, err };
+        wss.clients.forEach(c => {
+            c.send(JSON.stringify(data))
+        })
     })
 })
 
@@ -72,15 +73,6 @@ app
     .use(_express.urlencoded({ extended: false }))
     .use(_express.json())
     .use(_router)
-    // serve web-sockets requests
-    /*
-    .ws("/", (ws, req) => {
-        console.log("app.ws(/)");
-        ws.on("message", msg => {
-            console.log("app.ws.on(message)", msg);
-        })
-    })
-    */
     // handle errors
     .use((err, req, res, next) => {
         console.log("_router onerror", err);
